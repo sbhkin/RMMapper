@@ -1,4 +1,4 @@
-Enchanted RMMapper
+Enhanced RMMapper
 ========
 You can convert objects in different Classes in a array.
 
