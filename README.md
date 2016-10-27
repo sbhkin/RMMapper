@@ -1,12 +1,39 @@
+Enchanted RMMapper
+========
+You can convert objects in different Classes in a array.
+
+- You have a jsonArray that contain different type of object
+```
+    [objectA,objectB,objectC,objectD...]
+```
+- So you may trace the type of object with some parameters inside the object,
+    for example you use "type" to trace
+    The Array may like : [{name:"myName",type: 0},{id:1234, type: 1}]
+
+- The value of type MUST be int to let RMMapper to identifier the Class to be mapped
+
+- Then you write a static array to define the Classes that those Object Map to
+```swift
+let RMTypeClassArray:[AnyObject] = [NSNull(),
+                        TypeAModel.classForCoder(),
+                        TypeBModel.classForCoder(),
+                        TypeCModel.classForCoder(),
+                        ...
+                        NSNull(),
+                        TypeKModel.classForCoder()]
+```
+- Using the below method, you will get an array which contains different class of object
+
+```swift
+let array = RMMapper.arrayOfClasses(RMTypeClassArray, compareWith: "type", fromArrayOfDictionary: jsonObject!.arrayObject)
+```
+DONE!
+
+
+
 Setup
 ========
 You can drag the RMMapper folder to your project. This library must be ARC enabled.
-
-RMMapper can be installed by CocoaPods. Add below line to your Podfile to install it.
-
-```
-pod 'RMMapper'
-```
 
 Methods
 =======
@@ -106,13 +133,13 @@ If your property is an array of another models, you can provide the model class 
 Usage of RMMapper
 =================
 
-RMMapper is very helpful when you want to archive custom object into NSUserDefaults, or make an object copyable. 
+RMMapper is very helpful when you want to archive custom object into NSUserDefaults, or make an object copyable.
 
-If you want to make RMUser class archivable so that you can save it into NSUserDefaults, just add this into the header: 
+If you want to make RMUser class archivable so that you can save it into NSUserDefaults, just add this into the header:
 
 ```objc
 #import "NSObject+RMArchivable.h"
-``` 
+```
 
 Then done, your class is ready to be archived! You can use category NSUserDefaults+RMSaveCustomObject to help you archive faster:
 
