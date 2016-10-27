@@ -98,6 +98,7 @@ static const char *getPropertyType(objc_property_t property) {
 #pragma mark - Populate object from data dictionary
 
 +(id)populateObject:(id)obj fromDictionary:(NSDictionary *)dict {
+    RMMapperLog(@"RMMapper Mapping Objct, %@",obj);
     if (obj == nil) {
         return nil;
     }
@@ -125,8 +126,7 @@ static const char *getPropertyType(objc_property_t property) {
     // If key is not inside the object properties, it's skipped too.
     // Otherwise assign value of key from dict to obj
     for (id dataKey in dict) {
-        
-        // Skip for non-string key
+              // Skip for non-string key
         if ([dataKey isKindOfClass:[NSString class]] == NO) {
             RMMapperLog(@"RMMapper: key must be NSString. Received key \"%@\"", dataKey);
             continue;
@@ -220,6 +220,30 @@ static const char *getPropertyType(objc_property_t property) {
                         }
                     }
                 }
+                else if ([obj respondsToSelector:@selector(rm_itemClassForArrayDict:)]) {
+                    // Get the class of item inside the array
+                    Class itemCls = [obj rm_itemClassForArrayDict:dict];
+                    
+                    // If no item class is specified, set value directly to object property
+                    if (!itemCls) {
+                        [obj setValue:value forKey:property];
+                    } else {
+                        // Process value to array with specified item class
+                        NSArray* arr = [RMMapper arrayOfClass:itemCls fromArrayOfDictionary:value];
+                        
+                        // Set mutable array to property if propertyType is NSMutableArray
+                        if ([propertyType isEqualToString:@"NSMutableArray"]) {
+                            [obj setValue:[NSMutableArray arrayWithArray:arr] forKey:property];
+                        }
+                        
+                        // Set arr to property if propertyType is NSArray
+                        else if ([propertyType isEqualToString:@"NSArray"]) {
+                            [obj setValue:arr forKey:property];
+                        } else {
+                            [obj setValue:value forKey:property];
+                        }
+                    }
+                }
             }
         }
     }
@@ -244,7 +268,43 @@ static const char *getPropertyType(objc_property_t property) {
     return arrWithClass;
 }
 
++(NSArray *)arrayOfClasses:(NSArray *)clses compareWith:(NSString*)key fromArrayOfDictionary:(NSArray *)array {
+    NSMutableArray *mutableArray = [RMMapper mutableArrayOfClasses:clses compareKey:key fromArrayOfDictionary:array];
+    
+    NSArray *arrWithClass = [NSArray arrayWithArray:mutableArray];
+    return arrWithClass;
+}
+
+
 +(NSMutableArray *)mutableArrayOfClass:(Class)cls fromArrayOfDictionary:(NSArray *)array {
+    
+    if (!array) {
+        return nil;
+    }
+    
+    NSMutableArray *mutableArray = [[NSMutableArray alloc] initWithCapacity:[array count]];
+    
+    for (id item in array) {
+        
+        // The item must be a dictionary. Otherwise, skip it
+        if (![item isKindOfClass:[NSDictionary class]] && ![item isKindOfClass:[NSString class]]) {
+            RMMapperLog(@"RMMapper: item inside array must be NSDictionary/String object");
+            continue;
+        }
+        id obj;
+        if ([item isKindOfClass:[NSString class]]) {
+                obj = item;
+        }else {
+        // Convert item dictionary to object with predefined class
+         obj = [RMMapper objectWithClass:cls fromDictionary:item];
+        }
+        [mutableArray addObject:obj];
+    }
+    
+    return mutableArray;
+}
+
++(NSMutableArray *)mutableArrayOfClasses:(NSArray *)clses compareKey:(NSString*)key fromArrayOfDictionary:(NSArray *)array {
     
     if (!array) {
         return nil;
@@ -260,13 +320,22 @@ static const char *getPropertyType(objc_property_t property) {
             continue;
         }
         
-        // Convert item dictionary to object with predefined class
-        id obj = [RMMapper objectWithClass:cls fromDictionary:item];
-        [mutableArray addObject:obj];
+        NSDictionary* itemDict = (NSDictionary*)item;
+        int typeNo = ((NSString*)itemDict[key]).intValue;
+        
+        
+        if(typeNo < clses.count) {
+            if(![clses[typeNo] isEqual:[NSNull null]]) {
+                // Convert item dictionary to object with predefined class
+                id obj = [RMMapper objectWithClass:clses[typeNo] fromDictionary:item];
+                [mutableArray addObject:obj];
+            }
+        }
     }
     
     return mutableArray;
 }
+
 
 
 #pragma mark - Convert plain object to dictionary

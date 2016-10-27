@@ -17,6 +17,9 @@
 // Parse item within array
 - (Class)rm_itemClassForArrayProperty:(NSString*)property;
 
+// Parse item within array by dict
+- (Class)rm_itemClassForArrayDict:(NSDictionary*)dictionary;
+
 @end
 
 
@@ -49,6 +52,9 @@
 /** Convert an array of dict to array of object with predefined class
  */
 + (NSArray*) arrayOfClass:(Class)cls fromArrayOfDictionary:(NSArray*)array;
+
++(NSArray *)arrayOfClasses:(NSArray *)clses compareWith:(NSString*)key fromArrayOfDictionary:(NSArray *)array;
+
 + (NSMutableArray*) mutableArrayOfClass:(Class)cls fromArrayOfDictionary:(NSArray*)array;
 
 @end
